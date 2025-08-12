@@ -29,11 +29,34 @@ const schema = new mongoose.Schema(
 
     role: {
       type: String,
-      enum: ["delivery", "customer", "admin"],
+      enum: ["customer", "admin", "delivery"],
       default: "customer",
     },
 
     approved: {
+      type: Boolean,
+      default: false,
+    },
+
+    address: {
+      housenumber: {
+        type: String,
+      },
+
+      street: {
+        type: String,
+      },
+
+      city: {
+        type: String,
+      },
+
+      pincode: {
+        type: String,
+      },
+    },
+
+    isDelivering: {
       type: Boolean,
       default: false,
     },

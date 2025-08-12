@@ -1,0 +1,12 @@
+{
+  "name": "Idly",
+  "main_ingredient": "Rice, urad dal",
+  "description": "Soft steamed rice cakes served with chutney and sambar",
+  "spice_level": "Mild",
+  "type": "Idly",
+  "price": 40,
+  "images": [
+    "https://t3.ftcdn.net/jpg/03/62/02/26/360_F_362022640_fZ6UM0JycJlFDdBiR1pYlNddKfdGvYwR.jpg",
+    "https://inemai.com/wp-content/uploads/2019/02/idly.jpg"
+  ]
+}

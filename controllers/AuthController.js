@@ -3,10 +3,21 @@ import UserModal from "../models/UserModal.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 
-export const onRegister = TryCatch(async (req, res) => {
+export const onRegisterDelivery = TryCatch(async (req, res) => {
   console.log(req.files);
 
-  const { name, email, mobile, role, password } = req.body;
+  const {
+    name,
+    email,
+    mobile,
+    role,
+    password,
+    housenumber,
+    street,
+    city,
+    pincode,
+    district,
+  } = req.body;
 
   if (!name || !email || !mobile || !password) {
     return res.status(400).send({ message: "Please fill required fields" });
@@ -20,7 +31,15 @@ export const onRegister = TryCatch(async (req, res) => {
     }
   }
 
-  const body = { name, email, mobile };
+  const address = {};
+
+  if (housenumber) address.housenumber = housenumber;
+  if (city) address.city = city;
+  if (pincode) address.pincode = pincode;
+  if (street) address.street = street;
+  if (district) address.district = district;
+
+  const body = { name, email, mobile, address };
 
   if (req.files.aadhar) body.aadhar = req.files.aadhar?.[0]?.path;
   if (req.files.license) body.license = req.files.license?.[0]?.path;
@@ -32,6 +51,47 @@ export const onRegister = TryCatch(async (req, res) => {
   } else {
     body.role = "customer";
   }
+
+  const salt = bcrypt.genSaltSync(10);
+  const hash = bcrypt.hashSync(password, salt);
+
+  body.password = hash;
+
+  const newUser = await UserModal.create(body);
+
+  const token = await jwt.sign({ _id: newUser._id }, process.env.JWT_SECRET);
+
+  return res.status(200).send({ message: "Registered Success", token });
+});
+export const onRegisterCustomer = TryCatch(async (req, res) => {
+  const {
+    name,
+    email,
+    mobile,
+    role,
+    password,
+    housenumber,
+    street,
+    city,
+    pincode,
+    district,
+  } = req.body;
+
+  if (!name || !email || !mobile || !password) {
+    return res.status(400).send({ message: "Please fill required fields" });
+  }
+
+  const address = {};
+
+  if (housenumber) address.housenumber = housenumber;
+  if (city) address.city = city;
+  if (pincode) address.pincode = pincode;
+  if (street) address.street = street;
+  if (district) address.district = district;
+
+  const body = { name, email, mobile, address };
+
+  body.role = "customer";
 
   const salt = bcrypt.genSaltSync(10);
   const hash = bcrypt.hashSync(password, salt);
@@ -57,9 +117,7 @@ export const onLogin = TryCatch(async (req, res) => {
   if (!passCorrect)
     return res.status(400).send({ message: "Invalid Credentials" });
 
-  const token = await jwt.sign({ _id: user._id }, process.env.JWT_SECRET);
-
-  console.log(user);
+  const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET);
 
   return res
     .status(200)

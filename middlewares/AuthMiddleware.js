@@ -5,6 +5,8 @@ import jwt from "jsonwebtoken";
 export const getUserDetails = TryCatch(async (req, res, next) => {
   const Bearertoken = req.headers.authorization;
 
+  console.log(Bearertoken);
+
   if (!Bearertoken) {
     return res.status(400).send({ message: "Please Login to continue" });
   }

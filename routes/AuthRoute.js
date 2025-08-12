@@ -1,8 +1,9 @@
 import { Router } from "express";
 import {
-  onRegister,
   onLogin,
   getUserProfile,
+  onRegisterCustomer,
+  onRegisterDelivery,
 } from "../controllers/AuthController.js";
 import upload from "../lib/multer.js";
 import { getUserDetails } from "../middlewares/AuthMiddleware.js";
@@ -10,7 +11,7 @@ import { getUserDetails } from "../middlewares/AuthMiddleware.js";
 const router = Router();
 
 router.post(
-  "/register",
+  "/register-delivery",
   upload.fields([
     {
       name: "aadhar",
@@ -21,7 +22,13 @@ router.post(
       maxCount: 1,
     },
   ]),
-  onRegister
+  onRegisterDelivery
+);
+
+router.post(
+  "/register",
+
+  onRegisterCustomer
 );
 
 router.post("/login", onLogin);
