@@ -4,6 +4,7 @@ import {
   getUserProfile,
   onRegisterCustomer,
   onRegisterDelivery,
+  editProfile,
 } from "../controllers/AuthController.js";
 import upload from "../lib/multer.js";
 import { getUserDetails } from "../middlewares/AuthMiddleware.js";
@@ -34,5 +35,7 @@ router.post(
 router.post("/login", onLogin);
 
 router.get("/profile", getUserDetails, getUserProfile);
+
+router.put("/edit-profile", getUserDetails, editProfile);
 
 export default router;

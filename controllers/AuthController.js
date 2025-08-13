@@ -127,3 +127,31 @@ export const onLogin = TryCatch(async (req, res) => {
 export const getUserProfile = TryCatch(async (req, res) => {
   return res.status(200).send(req.user);
 });
+
+export const editProfile = TryCatch(async (req, res) => {
+  const user = req.user;
+
+  const { housenumber, street, city, pincode, name, email, mobile } = req.body;
+
+  const body = {};
+  const address = {};
+
+  if (housenumber) address.housenumber = housenumber;
+  if (street) address.street = street;
+  if (city) address.city = city;
+  if (pincode) address.pincode = pincode;
+
+  if (name) body.name = name;
+  if (email) body.email = email;
+  if (mobile) body.mobile = mobile;
+
+  if (housenumber || street || city || pincode) {
+    body.address = address;
+  }
+
+  const updated = await UserModal.findByIdAndUpdate(user._id, {
+    $set: body,
+  });
+
+  return res.status(200).send(updated);
+});

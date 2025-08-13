@@ -8,6 +8,7 @@ import { connectDB } from "./lib/db.js";
 import AuthRoute from "./routes/AuthRoute.js";
 import OrderRoute from "./routes/OrderRoute.js";
 import AdminRoute from "./routes/AdminRoute.js";
+import PartnerRoute from "./routes/DeliveryRoute.js";
 
 dotenv.config({ path: "./.env" });
 
@@ -42,6 +43,8 @@ app.get("/", (req, res) => {
 app.use("/auth", AuthRoute);
 app.use("/orders", OrderRoute);
 app.use("/admin", AdminRoute);
+
+app.use("/partner", PartnerRoute);
 
 app.use(errorMiddleware);
 
