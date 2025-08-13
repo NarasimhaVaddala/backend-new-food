@@ -52,13 +52,13 @@ export const approveOrRejectUser = TryCatch(async (req, res) => {
 });
 
 export const getOrders = TryCatch(async (req, res) => {
-  const startOfDay = new Date();
+  const { search, status, paymentMode, date } = req.query;
+
+  const startOfDay = date ? new Date(date) : new Date();
   startOfDay.setHours(0, 0, 0, 0);
 
-  const endOfDay = new Date();
+  const endOfDay = date ? new Date(date) : new Date();
   endOfDay.setHours(23, 59, 59, 999);
-
-  const { search, status, paymentMode } = req.query;
 
   // Build the base match stage
   const matchStage = {
