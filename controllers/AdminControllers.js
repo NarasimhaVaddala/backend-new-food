@@ -2,6 +2,8 @@ import { TryCatch } from "../middlewares/error.js";
 import OrderModal from "../models/OrderModal.js";
 import UserModal from "../models/UserModal.js";
 
+import { io, connectedUsers } from "../app.js";
+
 export const getDeliveryBoys = TryCatch(async (req, res) => {
   //   const user = req.user;
 
@@ -152,6 +154,8 @@ export const getOrders = TryCatch(async (req, res) => {
   return res.status(200).send(orders);
 });
 export const assignDeliveryBoy = TryCatch(async (req, res) => {
+  console.log("HIT");
+
   const { orderId, delboyId } = req.params;
 
   if (!orderId || !delboyId) {
@@ -193,6 +197,33 @@ export const assignDeliveryBoy = TryCatch(async (req, res) => {
 
   await delBoy.save();
   await order.save();
+
+  let deliverySocketId = null;
+  for (const [socketId, userData] of connectedUsers.entries()) {
+    console.log(socketId, userData, "DF");
+
+    if (
+      userData?.userId?.toString() === delboyId.toString() &&
+      userData.role === "delivery"
+    ) {
+      userData.orderId = order._id;
+      deliverySocketId = socketId;
+      break;
+    }
+  }
+
+  if (deliverySocketId) {
+    console.log("---------------------");
+
+    io.to(deliverySocketId).emit("new-delivery", {
+      message: "You have a new order assigned!",
+      order: order._id,
+    });
+    console.log("---------------------");
+  } else {
+    console.log(`Delivery boy ${delboyId} is not online`);
+    // Optionally: send push notification here
+  }
 
   return res.status(200).send({ message: "Order Assigned" });
 });

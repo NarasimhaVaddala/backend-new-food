@@ -1,5 +1,6 @@
 import { TryCatch } from "../middlewares/error.js";
 import OrderModal from "../models/OrderModal.js";
+import { io, adminId } from "../app.js";
 
 export const PlaceOrder = TryCatch(async (req, res) => {
   const user = req.user;
@@ -18,6 +19,14 @@ export const PlaceOrder = TryCatch(async (req, res) => {
     items,
     user: user._id,
   });
+
+  try {
+    console.log("Sendoinf order to admin", adminId);
+    io.to(adminId).emit("new-order", newOrder);
+    console.log("Sendoinf order to admin");
+  } catch (error) {
+    console.log("Failed to send Order to admin");
+  }
 
   return res.status(200).send(newOrder);
 });
