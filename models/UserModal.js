@@ -1,5 +1,39 @@
 import mongoose from "mongoose";
 
+const addressSchema = new mongoose.Schema({
+  housenumber: {
+    type: String,
+  },
+
+  street: {
+    type: String,
+  },
+
+  city: {
+    type: String,
+  },
+
+  pincode: {
+    type: String,
+  },
+
+  state: {
+    type: String,
+  },
+  primary: {
+    type: Boolean,
+    default: false,
+  },
+
+  lat: {
+    type: Number,
+  },
+
+  lng: {
+    type: Number,
+  },
+});
+
 const schema = new mongoose.Schema(
   {
     name: {
@@ -40,21 +74,7 @@ const schema = new mongoose.Schema(
     },
 
     address: {
-      housenumber: {
-        type: String,
-      },
-
-      street: {
-        type: String,
-      },
-
-      city: {
-        type: String,
-      },
-
-      pincode: {
-        type: String,
-      },
+      type: [addressSchema],
     },
 
     isDelivering: {

@@ -8,6 +8,9 @@ import {
   sendOtp,
   onVerificationOtp,
   userSignupUser,
+  addAddress,
+  editAddress,
+  deleteAddress,
 } from "../controllers/AuthController.js";
 import upload from "../lib/multer.js";
 import { getUserDetails } from "../middlewares/AuthMiddleware.js";
@@ -30,15 +33,15 @@ router.post(
 );
 
 router.post("/register", onRegisterCustomer);
-
 router.post("/login", onLogin);
-
 router.get("/profile", getUserDetails, getUserProfile);
-
 router.put("/edit-profile", getUserDetails, editProfile);
 
 router.post("/send-otp", sendOtp);
 router.post("/verify-otp", onVerificationOtp);
 router.post("/user-sign-up", userSignupUser);
+router.post("/add-address", getUserDetails, addAddress);
+router.put("/edit-address/:id", getUserDetails, editAddress);
+router.delete("/delete-address/:id", getUserDetails, deleteAddress);
 
 export default router;

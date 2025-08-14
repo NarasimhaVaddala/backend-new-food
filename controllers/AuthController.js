@@ -138,18 +138,18 @@ export const editProfile = TryCatch(async (req, res) => {
   const body = {};
   const address = {};
 
-  if (housenumber) address.housenumber = housenumber;
-  if (street) address.street = street;
-  if (city) address.city = city;
-  if (pincode) address.pincode = pincode;
+  // if (housenumber) address.housenumber = housenumber;
+  // if (street) address.street = street;
+  // if (city) address.city = city;
+  // if (pincode) address.pincode = pincode;
 
   if (name) body.name = name;
   if (email) body.email = email;
   if (mobile) body.mobile = mobile;
 
-  if (housenumber || street || city || pincode) {
-    body.address = address;
-  }
+  // if (housenumber || street || city || pincode) {
+  //   body.address = address;
+  // }
 
   const updated = await UserModal.findByIdAndUpdate(user._id, {
     $set: body,
@@ -233,7 +233,7 @@ export const onVerificationOtp = async (req, res) => {
         .json({ message: "User does not exist", mobile: mobile });
     }
 
-    const payload = { mobile: user.mobile };
+    const payload = { _id: user._id, mobile };
     const token = jwt.sign(payload, process.env.JWT_SECRET);
 
     return res.status(200).json({ token, message: "Verified" });
@@ -251,7 +251,7 @@ export const userSignupUser = async (req, res) => {
     const { name, email, mobile } = req.body;
 
     // Check if user exists
-    const existingUser = await User.findOne({
+    const existingUser = await UserModal.findOne({
       $or: [{ email }, { mobile }],
     });
     if (existingUser) {
@@ -259,10 +259,10 @@ export const userSignupUser = async (req, res) => {
         .status(400)
         .json({ message: "Email or mobile already exists" });
     }
-    const payload = { mobile: existingUser.mobile };
+    const newUser = await UserModal.create({ name, email, mobile });
+    const payload = { _id: newUser._id, mobile };
     const token = jwt.sign(payload, process.env.JWT_SECRET);
 
-    const newUser = await User.create({ name, email, mobile });
     return res
       .status(201)
       .json({ message: "User created successfully", user: newUser, token });
@@ -271,3 +271,76 @@ export const userSignupUser = async (req, res) => {
     return res.status(500).json({ message: "Server Error" });
   }
 };
+
+export const addAddress = TryCatch(async (req, res) => {
+  const user = req.user;
+  const { housenumber, street, city, pincode, state, lat, lng } = req.body;
+
+  if (!housenumber || !street || !city || !pincode || !lat || !lng) {
+    return res.status(400).send({ message: "Fill all fields" });
+  }
+
+  const userToUpdate = await UserModal.findById(user._id);
+
+  const details = {
+    housenumber,
+    street,
+    city,
+    pincode,
+    lat,
+    lng,
+  };
+
+  if (state) details.state = state;
+  userToUpdate.address.push(details);
+
+  await userToUpdate.save();
+
+  return res.status(200).send({ message: "Updated Success" });
+});
+
+export const editAddress = TryCatch(async (req, res) => {
+  const user = req.user;
+  const { housenumber, street, city, pincode, state, lat, lng } = req.body;
+  const { id } = req.params;
+
+  // Build update object
+  const updateData = {};
+  if (housenumber) updateData.housenumber = housenumber;
+  if (street) updateData.street = street;
+  if (city) updateData.city = city;
+  if (pincode) updateData.pincode = pincode;
+  if (state) updateData.state = state;
+  if (lat !== undefined) updateData.lat = lat;
+  if (lng !== undefined) updateData.lng = lng;
+
+  // Find user and update specific address
+  const updatedUser = await UserModal.findById(user._id);
+  if (!updatedUser) {
+    return res.status(404).send({ message: "User not found" });
+  }
+
+  const address = updatedUser.address.id(id);
+  if (!address) {
+    return res.status(404).send({ message: "Address not found" });
+  }
+
+  Object.assign(address, updateData);
+
+  await updatedUser.save();
+
+  return res.status(200).send({ message: "Address updated successfully" });
+});
+
+export const deleteAddress = TryCatch(async (req, res) => {
+  const user = req.user;
+  const { id } = req.params;
+
+  const userToUpdate = await UserModal.findById(user._id);
+
+  userToUpdate.address.pull({ _id: id });
+
+  await userToUpdate.save();
+
+  return res.status(200).send({ message: "Deleted Success" });
+});

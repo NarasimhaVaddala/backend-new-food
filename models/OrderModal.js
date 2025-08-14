@@ -89,6 +89,16 @@ const schema = new Schema(
       type: String,
       default: null,
     },
+    address: {
+      type: {
+        housenumber: { type: String, default: null },
+        city: { type: String, default: null },
+        pincode: { type: String, default: null },
+        street: { type: String, default: null },
+        lat: { type: Number, default: null },
+        lng: { type: Number, default: null },
+      },
+    },
   },
   {
     timestamps: true,
