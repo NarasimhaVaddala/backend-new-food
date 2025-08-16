@@ -11,6 +11,7 @@ import AuthRoute from "./routes/AuthRoute.js";
 import OrderRoute from "./routes/OrderRoute.js";
 import AdminRoute from "./routes/AdminRoute.js";
 import PartnerRoute from "./routes/DeliveryRoute.js";
+import ContactRoute from "./routes/ContactRoute.js";
 
 dotenv.config({ path: "./.env" });
 
@@ -96,6 +97,7 @@ app.use("/auth", AuthRoute);
 app.use("/orders", OrderRoute);
 app.use("/admin", AdminRoute);
 app.use("/partner", PartnerRoute);
+app.use("/contact", ContactRoute);
 
 app.use(errorMiddleware);
 
