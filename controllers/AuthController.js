@@ -274,9 +274,14 @@ export const userSignupUser = async (req, res) => {
 
 export const addAddress = TryCatch(async (req, res) => {
   const user = req.user;
-  const { housenumber, street, city, pincode, state, lat, lng } = req.body;
+  const { housenumber, street, city, pincode, state, lat, lng, landmark } =
+    req.body;
 
-  if (!housenumber || !street || !city || !pincode || !lat || !lng) {
+  console.log(req.body);
+
+  if (!housenumber || !street || !city || !pincode) {
+    console.log(req.body, "-=-=-=-=-=");
+
     return res.status(400).send({ message: "Fill all fields" });
   }
 
@@ -287,9 +292,11 @@ export const addAddress = TryCatch(async (req, res) => {
     street,
     city,
     pincode,
-    lat,
-    lng,
   };
+
+  if (lat) details.lat = lat;
+  if (lng) details.lng = lng;
+  if (landmark) details.landmark = lng;
 
   if (state) details.state = state;
   userToUpdate.address.push(details);

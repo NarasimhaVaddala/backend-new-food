@@ -10,8 +10,6 @@ export const PlaceOrder = TryCatch(async (req, res) => {
   const { items, totalPrice, paymentStatus, paymentMode, selectedAddress } =
     req.body;
 
-  console.log(selectedAddress);
-
   if (!items || !totalPrice || !paymentStatus || !paymentMode) {
     return res.status(400).send("Please fill required fields");
   }
@@ -27,6 +25,10 @@ export const PlaceOrder = TryCatch(async (req, res) => {
   const addr = usr.address.find(
     (e) => e._id?.toString() === selectedAddress?.toString()
   );
+
+  if (!addr) {
+    return res.status(404).send({ message: "Address Not Found" });
+  }
 
   const newOrder = await OrderModal.create({
     totalPrice,
