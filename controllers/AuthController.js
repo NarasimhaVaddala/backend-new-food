@@ -25,6 +25,15 @@ export const onRegisterDelivery = TryCatch(async (req, res) => {
     return res.status(400).send({ message: "Please fill required fields" });
   }
 
+  const existingUser = await UserModal.findOne({
+    $or: [{ mobile }, { email }],
+  });
+
+  if (existingUser)
+    return res
+      .status(400)
+      .send({ message: "User Already Exists with this email or mobile" });
+
   if (role == "delivery") {
     if (!req.files.aadhar || !req.files.license) {
       return res
@@ -110,10 +119,35 @@ export const onRegisterCustomer = TryCatch(async (req, res) => {
 export const onLogin = TryCatch(async (req, res) => {
   const { mobile, password } = req.body;
 
+  console.log(mobile, password);
+
   const user = await UserModal.findOne({ mobile });
 
   if (!user) return res.status(404).send({ message: "User Not Found" });
 
+  const passCorrect = bcrypt.compareSync(password, user.password);
+
+  if (!passCorrect)
+    return res.status(400).send({ message: "Invalid Credentials" });
+
+  const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET);
+
+  return res
+    .status(200)
+    .send({ message: "Login Success", token, approved: user.approved });
+});
+export const onAdminLogin = TryCatch(async (req, res) => {
+  const { mobile, password } = req.body;
+
+  console.log(mobile, password);
+
+  const user = await UserModal.findOne({ mobile, role: "admin" });
+
+  if (!user) return res.status(404).send({ message: "User Not Found" });
+
+  if (user.role !== "admin") {
+    return res.status(401).send({ message: "Unauthorized" });
+  }
   const passCorrect = bcrypt.compareSync(password, user.password);
 
   if (!passCorrect)

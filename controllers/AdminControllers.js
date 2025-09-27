@@ -3,6 +3,7 @@ import OrderModal from "../models/OrderModal.js";
 import UserModal from "../models/UserModal.js";
 
 import { io, connectedUsers } from "../app.js";
+import Contact from "../models/ContactModal.js";
 
 export const getDeliveryBoys = TryCatch(async (req, res) => {
   //   const user = req.user;
@@ -26,6 +27,8 @@ export const getDeliveryBoys = TryCatch(async (req, res) => {
   }
 
   const users = await UserModal.find(query);
+
+  // console.log();
 
   return res.status(200).send(users);
 });
@@ -153,6 +156,7 @@ export const getOrders = TryCatch(async (req, res) => {
   const orders = await query;
   return res.status(200).send(orders);
 });
+
 export const assignDeliveryBoy = TryCatch(async (req, res) => {
   console.log("HIT");
 
@@ -226,4 +230,110 @@ export const assignDeliveryBoy = TryCatch(async (req, res) => {
   }
 
   return res.status(200).send({ message: "Order Assigned" });
+});
+
+export const getAnalytics = TryCatch(async (req, res) => {
+  // 1) Orders by status
+  const statusCounts = await OrderModal.aggregate([
+    {
+      $match: {
+        status: { $in: ["pending", "accepted", "completed", "cancelled"] },
+      },
+    },
+    {
+      $group: {
+        _id: "$status",
+        count: { $sum: 1 },
+      },
+    },
+  ]);
+
+  const orderStatus = {
+    pending: 0,
+    accepted: 0,
+    completed: 0,
+    cancelled: 0,
+  };
+  statusCounts.forEach((item) => {
+    orderStatus[item._id] = item.count;
+  });
+
+  // 2) Driver count by isDelivering
+  const driverListCount = await UserModal.aggregate([
+    {
+      $match: {
+        role: "delivery",
+        approved: true,
+      },
+    },
+    {
+      $group: {
+        _id: "$isDelivering",
+        count: { $sum: 1 },
+      },
+    },
+  ]);
+
+  const driverStatus = { true: 0, false: 0 };
+  driverListCount.forEach((item) => {
+    driverStatus[item._id] = item.count;
+  });
+
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+
+  const recentOrders = await OrderModal.aggregate([
+    {
+      $match: {
+        status: { $in: ["completed", "cancelled"] },
+        createdAt: { $gte: sevenDaysAgo },
+      },
+    },
+    {
+      $group: {
+        _id: {
+          date: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          status: "$status",
+        },
+        count: { $sum: 1 },
+      },
+    },
+  ]);
+
+  // build structure for last 7 days
+  const last7DaysOrders = [];
+
+  // generate last 7 days array (so missing days show as 0)
+  for (let i = 0; i < 7; i++) {
+    const date = new Date();
+    date.setDate(date.getDate() - i);
+
+    const formatted = date.toISOString().split("T")[0]; // YYYY-MM-DD
+
+    last7DaysOrders.unshift({
+      date: formatted,
+      completed: 0,
+      cancelled: 0,
+    });
+  }
+
+  // fill counts
+  recentOrders.forEach((item) => {
+    const day = last7DaysOrders.find((d) => d.date === item._id.date);
+    if (day) {
+      day[item._id.status] = item.count;
+    }
+  });
+
+  return res.json({
+    orderStatus, // { pending, accepted, completed, cancelled }
+    driverStatus, // { true, false }
+    last7DaysOrders, // { completed, cancelled }
+  });
+});
+
+export const getContacts = TryCatch(async (req, res) => {
+  const contacts = await Contact.find({}).sort({ createdAt: -1 });
+
+  return res.status(200).send(contacts);
 });

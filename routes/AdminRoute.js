@@ -4,8 +4,9 @@ import {
   approveOrRejectUser,
   getOrders,
   assignDeliveryBoy,
+  getAnalytics,
+  getContacts,
 } from "../controllers/AdminControllers.js";
-import { getUserDetails } from "../middlewares/AuthMiddleware.js";
 
 const router = Router();
 
@@ -20,7 +21,10 @@ router.get(
 router.put("/approve-or-reject/:id", approveOrRejectUser);
 
 router.get("/get-orders", getOrders);
+router.get("/analytics", getAnalytics);
 
 router.put("/assign-delivery-boy/:orderId/:delboyId", assignDeliveryBoy);
+
+router.get("/contacts", getContacts);
 
 export default router;
