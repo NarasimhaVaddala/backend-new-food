@@ -4,6 +4,60 @@ import { io, adminId, connectedUsers } from "../app.js";
 import { ThrowInternalError } from "../lib/ThrowInternalError.js";
 import UserModal from "../models/UserModal.js";
 import { getSocketIdByUserId } from "../utils/socketUtils.js";
+import Razorpay from "razorpay";
+import TransactionModal from "../models/TransactionModal.js";
+import { createHmac } from "crypto";
+import { envMode } from "../app.js";
+
+// const key_id =
+//   process.env.NODE_ENV === "development"
+//     ? process.env.RZP_KEY_ID_DEV
+//     : process.env.RZP_KEY_ID;
+
+// const key_secret =
+//   process.env.NODE_ENV === "development"
+//     ? process.env.RZP_SECRET_DEV
+//     : process.env.RZP_SECRET;
+
+// const razorpay = new Razorpay({
+//   key_id,
+//   key_secret,
+// });
+
+const getRazorpayCredentials = () => {
+  const key_id =
+    envMode === "DEVELOPMENT"
+      ? process.env.RZP_KEY_ID_DEV
+      : process.env.RZP_KEY_ID;
+
+  const key_secret =
+    envMode === "DEVELOPMENT"
+      ? process.env.RZP_SECRET_DEV
+      : process.env.RZP_SECRET;
+
+  return { key_id, key_secret };
+};
+
+// Function to create Razorpay instance
+const createRazorpayInstance = () => {
+  const { key_id, key_secret } = getRazorpayCredentials();
+
+  console.log(key_id, key_secret);
+
+  if (!key_id || !key_secret) {
+    console.error("Razorpay credentials missing:", {
+      key_id: !!key_id,
+      key_secret: !!key_secret,
+      NODE_ENV: process.env.NODE_ENV,
+    });
+    throw new Error("Razorpay credentials are not properly configured");
+  }
+
+  return new Razorpay({
+    key_id,
+    key_secret,
+  });
+};
 
 export const PlaceOrder = TryCatch(async (req, res) => {
   const user = req.user;
@@ -111,3 +165,62 @@ export const getAllOrders = TryCatch(async (req, res) => {
     ThrowInternalError(errpr);
   }
 });
+
+export const createRazorpayOrder = TryCatch(async (req, res) => {
+  const user = req.user;
+
+  const { amount } = req.body;
+  if (!amount)
+    return res.status(400).send({ message: "Order Amount is required" });
+
+  const options = {
+    amount: amount * 100,
+    currency: "INR",
+    receipt: `receipt_${Date.now()}`,
+    payment_capture: 1,
+  };
+
+  const razorpay = await createRazorpayInstance();
+
+  const order = await razorpay.orders.create(options);
+
+  await TransactionModal.create({
+    orderId: order.id,
+    amount: amount,
+    user: user._id,
+  });
+
+  return res.status(200).send({ orderId: order.id });
+});
+
+export const verifyPayment = async (req, res) => {
+  const { key_secret } = getRazorpayCredentials();
+  try {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } =
+      req.body;
+
+    console.log(razorpay_order_id);
+    console.log(razorpay_payment_id);
+    console.log(razorpay_signature);
+
+    const hmac = createHmac("sha256", key_secret);
+    hmac.update(`${razorpay_order_id}|${razorpay_payment_id}`);
+    const generatedSignature = hmac.digest("hex");
+
+    const paymentData = await TransactionModal.findOne({
+      orderId: razorpay_order_id,
+    });
+
+    if (generatedSignature === razorpay_signature) {
+      if (paymentData) {
+        paymentData.paymentId = razorpay_payment_id;
+        await paymentData.save();
+      }
+      return res.status(200).json({ success: true });
+    }
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).json({ error: "Failed To process payment" });
+  }
+};

@@ -1,3 +1,5 @@
+import dotenv from "dotenv";
+dotenv.config({ path: "./.env" });
 import express from "express";
 import helmet from "helmet";
 import cors from "cors";
@@ -5,15 +7,12 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import { errorMiddleware } from "./middlewares/error.js";
 import morgan from "morgan";
-import dotenv from "dotenv";
 import { connectDB } from "./lib/db.js";
 import AuthRoute from "./routes/AuthRoute.js";
 import OrderRoute from "./routes/OrderRoute.js";
 import AdminRoute from "./routes/AdminRoute.js";
 import PartnerRoute from "./routes/DeliveryRoute.js";
 import ContactRoute from "./routes/ContactRoute.js";
-
-dotenv.config({ path: "./.env" });
 
 export const envMode = process.env.NODE_ENV?.trim() || "DEVELOPMENT";
 const port = process.env.PORT || 5000;
